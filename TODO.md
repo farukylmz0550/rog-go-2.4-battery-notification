@@ -1,6 +1,6 @@
 # TODO
 
-Geçici çalışma listesi. Araştırma tamamlandıkça maddeler güncellenecek.
+Araştırma ve geliştirme çalışma listesi.
 
 ## Battery / HID keşfi
 
