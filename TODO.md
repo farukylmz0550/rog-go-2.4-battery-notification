@@ -1,94 +1,94 @@
 # TODO
 
-Araştırma ve geliştirme çalışma listesi.
+Research and development task list.
 
-## ✅ Sonuç alınanlar
+## ✅ Completed
 
-- [x] ROG Strix Go 2.4 USB HID cihazı tespit edildi.
-- [x] USB VID/PID tespit edildi: `0x0B05:0x18D6`.
-- [x] Pil bilgisinin standart Linux `UPower` / `/sys/class/power_supply/` üzerinden gelmediği doğrulandı.
-- [x] İlgili HID arayüzü tespit edildi: `1-1:1.3` / `MI_03`.
-- [x] `hidraw` üzerinden cihaza erişim sağlandı.
-- [x] HID report descriptor çıkarıldı ve önemli report ID'ler belirlendi: `0x01`, `0x64`, `0x65`, `0x90`, `0xC4`, `0xE2`, `0xFF`.
-- [x] Consumer Control report'u çözümlendi ve ses/mute/media kontrolleri doğrulandı.
-- [x] `0xFF` Feature Report için `GET_FEATURE` başarılı şekilde gerçekleştirildi.
-- [x] `0xFF` Feature Report'un gözlenen cevabının şarj kablosu takılı/takılı değil durumunda değişmediği doğrulandı.
-- [x] Pasif HID dinlemede vendor report'larının (`0x64`, `0x65`, `0x90`, `0xC4`, `0xE2`) kendiliğinden anlamlı veri üretmediği görüldü.
-- [x] `usbmon` erişiminin kernel lockdown nedeniyle engellendiği tespit edildi.
-- [x] G-Helper kaynak kodunda genel ASUS HID battery query protokolü bulundu.
-- [x] G-Helper'daki aday sorgu yapısı belirlendi: `[reportId, 0x12, 0x01]`.
-- [x] Genel ASUS protokolünde response içindeki `response[6]` alanının pil yüzdesi, `response[9]` alanının şarj durumu olarak kullanıldığı görüldü.
-- [x] G-Helper kaynak kodunda doğrudan `0x0B05:0x18D6` / ROG Strix Go 2.4 battery implementasyonu bulunamadı. Bu nedenle protokolün kulaklık için çalıştığı henüz varsayılmıyor.
+- [x] ROG Strix Go 2.4 USB HID device identified.
+- [x] USB VID/PID identified: `0x0B05:0x18D6`.
+- [x] Confirmed that battery information is not available through standard Linux `UPower` / `/sys/class/power_supply/`.
+- [x] Relevant HID interface identified: `1-1:1.3` / `MI_03`.
+- [x] Access to the device established through `hidraw`.
+- [x] HID report descriptor extracted and important report IDs identified: `0x01`, `0x64`, `0x65`, `0x90`, `0xC4`, `0xE2`, `0xFF`.
+- [x] Consumer Control report analyzed and volume/mute/media controls verified.
+- [x] `GET_FEATURE` successfully performed for HID Feature Report `0xFF`.
+- [x] Confirmed that the observed response from HID Feature Report `0xFF` did not change depending on whether the charging cable was connected.
+- [x] Observed that vendor reports (`0x64`, `0x65`, `0x90`, `0xC4`, `0xE2`) did not spontaneously produce meaningful data during passive HID monitoring so far.
+- [x] Confirmed that `usbmon` access is blocked by kernel lockdown.
+- [x] Found the generic ASUS HID battery query protocol in the G-Helper source code.
+- [x] Identified the candidate query structure used by G-Helper: `[reportId, 0x12, 0x01]`.
+- [x] Confirmed that the generic ASUS protocol uses `response[6]` for battery percentage and `response[9]` for charging state.
+- [x] Confirmed that no direct `0x0B05:0x18D6` / ROG Strix Go 2.4 battery implementation was found in the G-Helper source. Therefore, the protocol is not assumed to work for the headset.
 
-## ❌ Sonuç alınamayanlar / henüz çözülemeyenler
+## ❌ Unresolved / Not Yet Solved
 
-- [ ] `0xFF` Feature Report'tan doğrudan pil yüzdesi okunamadı.
-- [ ] `0x64` report'unun anlamı çözülemedi.
-- [ ] `0x65` report'unun anlamı çözülemedi.
-- [ ] `0x90` report'unun anlamı çözülemedi.
-- [ ] `0xC4` report'unun anlamı çözülemedi.
-- [ ] `0xE2` report'unun anlamı çözülemedi.
-- [ ] `event19` ve `event20` üzerindeki `ABS_MISC` alanlarının anlamı belirlenemedi.
-- [ ] Şu ana kadar hiçbir HID report'undan güvenilir pil yüzdesi elde edilemedi.
-- [ ] Şu ana kadar hiçbir HID report'undan güvenilir şarj durumu elde edilemedi.
-- [ ] Windows/Armoury Crate tarafındaki gerçek HID battery sorgusu henüz yakalanamadı.
+- [ ] Battery percentage could not be read directly from HID Feature Report `0xFF`.
+- [ ] The meaning of report `0x64` has not been determined.
+- [ ] The meaning of report `0x65` has not been determined.
+- [ ] The meaning of report `0x90` has not been determined.
+- [ ] The meaning of report `0xC4` has not been determined.
+- [ ] The meaning of report `0xE2` has not been determined.
+- [ ] The meaning of the `ABS_MISC` fields on `event19` and `event20` has not been determined.
+- [ ] No reliable battery percentage has been obtained from any HID report so far.
+- [ ] No reliable charging state has been obtained from any HID report so far.
+- [ ] The actual HID battery query used by Windows / Armoury Crate has not yet been captured.
 
-## 🔬 Battery / HID keşfi
+## 🔬 Battery / HID Discovery
 
-- [ ] G-Helper'daki ASUS battery sorgusunu Strix Go 2.4 üzerinde test et.
-- [ ] Aday report ID'leri (`0x90`, `0xC4`, `0xFF`) üzerinde `[reportId, 0x12, 0x01]` sorgusunun kabul edilip edilmediğini kontrollü şekilde araştır.
-- [ ] Sorgu cevap verirse response yapısını kaydet ve `response[6]` / `response[9]` benzeri alanları doğrula.
-- [ ] Pil yüzdesi olduğu düşünülen alanı farklı pil seviyelerinde doğrula.
-- [ ] Şarj bağlı ve bağlı değil durumlarında aynı alanı karşılaştır.
-- [ ] `HIDIOCGFEATURE` sonuçlarının neden tüm report ID'lerde `ff 01...` döndürdüğünü daha ayrıntılı doğrula.
-- [ ] `HIDIOCGINPUT` için alınan `Broken pipe` davranışını not et ve alternatif yöntemleri araştır.
-- [ ] `0x64` vendor input report'unu çözümle.
-- [ ] `0x65` vendor input report'unu çözümle.
-- [ ] `0x90` input/output report'unu çözümle.
-- [ ] `0xC4` input/output report'unu çözümle.
-- [ ] `0xE2` input report'unu çözümle.
-- [ ] `0xFF` feature/input report'unun alanlarını çözümle.
-- [ ] Şarj bağlı / bağlı değil durumlarında tüm ilgili HID davranışlarını karşılaştır.
-- [ ] Kulaklık açık / kapalı durumlarını karşılaştır.
-- [ ] Dongle bağlı / ayrılmış durumlarını karşılaştır.
-- [ ] `event19` ve `event20` üzerinde kontrollü durum testleri yap.
+- [ ] Test the G-Helper ASUS battery query on the ROG Strix Go 2.4.
+- [ ] Carefully investigate whether `[reportId, 0x12, 0x01]` is accepted on candidate report IDs (`0x90`, `0xC4`, `0xFF`).
+- [ ] If a query produces a response, record the response structure and verify fields such as `response[6]` / `response[9]`.
+- [ ] Verify the suspected battery field at different battery levels.
+- [ ] Compare the same field while charging and while not charging.
+- [ ] Investigate in more detail why `HIDIOCGFEATURE` returned `ff 01...`-style data when queried against non-Feature report IDs.
+- [ ] Document the `Broken pipe` behavior observed with `HIDIOCGINPUT` and investigate alternative methods.
+- [ ] Analyze vendor input report `0x64`.
+- [ ] Analyze vendor input report `0x65`.
+- [ ] Analyze input/output report `0x90`.
+- [ ] Analyze input/output report `0xC4`.
+- [ ] Analyze input report `0xE2`.
+- [ ] Analyze the fields of the `0xFF` Feature/Input report.
+- [ ] Compare HID behavior with the charging cable connected and disconnected.
+- [ ] Compare the headset powered on and powered off.
+- [ ] Compare the dongle connected and disconnected.
+- [ ] Perform controlled state tests on `event19` and `event20`.
 
-## 🔎 Mevcut kaynak kod araştırması
+## 🔎 Existing Source Code Research
 
-- [x] G-Helper `AsusKeyboard.cs` içindeki genel `ReadBattery()` yaklaşımı incelendi.
-- [x] G-Helper'da battery destekleyen ASUS modellerinin `HasBattery()` implementasyonları incelendi.
-- [ ] G-Helper issue/PR geçmişinde ROG Strix Go 2.4 (`18D6`) için özel battery protokolünü doğrula.
-- [ ] GitHub üzerinde `0B05:18D6`, `18D6`, `0x90`, `0xC4`, `0x12 0x01` kombinasyonlarıyla başka implementasyonlar ara.
+- [x] Inspected the generic `ReadBattery()` approach in G-Helper `AsusKeyboard.cs`.
+- [x] Inspected `HasBattery()` implementations for ASUS models supported by G-Helper.
+- [ ] Verify whether G-Helper issue/PR history contains a device-specific battery protocol for the ROG Strix Go 2.4 (`18D6`).
+- [ ] Search GitHub for other implementations matching `0B05:18D6`, `18D6`, `0x90`, `0xC4`, and `0x12 0x01`.
 
-## 🧩 Firmware / Windows araştırması
+## 🧩 Firmware / Windows Research
 
-- [ ] ASUS `S54WL_Update_V3763` firmware paketini statik olarak incele.
-- [ ] Firmware/update executable içinde `0b05`, `18d6`, HID report ID ve battery ile ilgili stringleri ara.
-- [ ] Armoury Crate / Armoury II'nin cihazla kullandığı protokolü araştır.
-- [ ] Mümkünse Windows + USBPcap + Wireshark ile gerçek HID trafiğini yakala.
-- [ ] Battery query request/response çiftini tespit et.
+- [ ] Statistically analyze the ASUS `S54WL_Update_V3763` firmware package.
+- [ ] Search the firmware/update executable for strings related to `0b05`, `18d6`, HID report IDs, and battery functionality.
+- [ ] Investigate the protocol used by Armoury Crate / Armoury II to communicate with the device.
+- [ ] If possible, capture the actual HID traffic with Windows + USBPcap + Wireshark.
+- [ ] Identify the battery query request/response pair.
 
-## 🛠️ Uygulama
+## 🛠️ Application
 
-- [ ] Battery yüzdesini güvenilir şekilde okuyacak Linux HID kodunu yaz.
-- [ ] `/dev/hidrawN` yerine VID/PID veya stabil udev yolu ile cihaz keşfi yap.
-- [ ] Düşük pil eşiği için freedesktop notification desteği ekle.
-- [ ] Kritik pil eşiği için ayrı bildirim ekle.
-- [ ] Şarj durumunu tespit edince şarj başladı/bitti bildirimlerini değerlendir.
-- [ ] DE/WM bağımsız arka plan çalışmasını tasarla.
-- [ ] Kullanıcı servisi / udev izinleri konusunu düzenle.
-- [ ] Dongle yeniden bağlandığında cihazı otomatik yeniden keşfet.
+- [ ] Implement Linux HID code that can reliably read the battery percentage.
+- [ ] Discover the device using VID/PID or a stable udev path instead of `/dev/hidrawN`.
+- [ ] Add freedesktop notification support for the low-battery threshold.
+- [ ] Add a separate notification for critical battery level.
+- [ ] Evaluate charging started/finished notifications once charging state detection is available.
+- [ ] Design background operation independently of the desktop environment/window manager.
+- [ ] Configure the user service / udev permissions.
+- [ ] Automatically rediscover the device when the dongle is reconnected.
 
-## 🚫 Kapsam dışı
+## 🚫 Out of Scope
 
-- [x] EQ kontrolü projeye dahil edilmeyecek. PipeWire/EasyEffects tarafından ele alınabilir.
-- [x] Armoury Crate klonu yapılmayacak.
-- [x] Gereksiz ASUS cihaz kontrolleri, pil okuma çözülene kadar öncelik değil.
+- [x] EQ control will not be included in the project. It can be handled through PipeWire/EasyEffects.
+- [x] An Armoury Crate clone will not be developed.
+- [x] Unnecessary ASUS device controls are not a priority until battery reading is solved.
 
-## Sonraki oturum için ilk adım
+## Next Session
 
-1. G-Helper'daki `[reportId, 0x12, 0x01]` sorgusunu Strix Go 2.4'ün gerçek vendor report ID'leri üzerinde kontrollü şekilde test et.
-2. Cevap veren bir report bulunursa response byte'larını kaydet.
-3. Aynı değeri farklı pil/şarj durumlarında karşılaştır.
-4. Sonuçları `research/rog-strix-go-2-4-linux-research.md` dosyasına ekle.
-5. Pil alanı doğrulanırsa gerçek Linux battery reader implementasyonuna geç.
+1. Carefully test the G-Helper `[reportId, 0x12, 0x01]` query against the ROG Strix Go 2.4's actual vendor report IDs.
+2. If a report responds, record the raw response bytes.
+3. Compare the response at different battery and charging states.
+4. Add the findings to `research/rog-strix-go-2-4-linux-research.md`.
+5. Once the battery field is verified, proceed to the actual Linux battery reader implementation.
