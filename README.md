@@ -1,62 +1,62 @@
 # ROG Go 2.4 Battery Notification
 
-Linux için ASUS ROG Strix Go 2.4'ün pil seviyesini takip etmeye yönelik bir çalışma.
+A project focused on monitoring the battery level of the ASUS ROG Strix Go 2.4 on Linux.
 
-> ⚠️ **Erken geliştirme aşaması**
+> ⚠️ **Early development stage**
 >
-> Projenin şu anki ana amacı araştırma ve protokol keşfi. Henüz çalışan bir pil yüzdesi okuyucusu bulunmuyor.
+> The current primary goal of the project is research and protocol discovery. There is no working battery percentage reader yet.
 
-## Amaç
+## Goal
 
-Birincil hedef:
+The primary goal is:
 
-**ROG Strix Go 2.4'ün pil yüzdesini Linux'tan okuyabilmek ve pil azaldığında masaüstü bildirim göstermek.**
+**Read the battery percentage of the ROG Strix Go 2.4 from Linux and display a desktop notification when the battery is low.**
 
-Bildirimler mümkün olduğunca masaüstü ortamından ve pencere yöneticisinden bağımsız, freedesktop bildirim standardı üzerinden çalışacak.
+Notifications will work independently of the desktop environment and window manager as much as possible, using the freedesktop notification standard.
 
-Diğer özellikler daha sonra değerlendirilebilir.
+Additional features may be evaluated later.
 
-## Mevcut durum
+## Current Status
 
-- USB cihazı Linux tarafından tanınıyor.
+- The USB device is detected by Linux.
 - VID/PID: `0B05:18D6`
-- ROG Strix Go 2.4 için HID arayüzü mevcut.
-- `hidraw` üzerinden ASUS vendor HID raporları incelenebiliyor.
-- Standart medya kontrolleri Linux input sistemi tarafından tanınıyor.
-- UPower şu anda kulaklığı bir batarya aygıtı olarak göstermiyor.
-- `/sys/class/power_supply/` altında kulaklık için batarya aygıtı bulunmuyor.
-- HID Feature Report `0xFF` okunabiliyor ancak mevcut cevap pil seviyesini göstermiyor.
-- Pil yüzdesinin hangi HID raporunda bulunduğu henüz bilinmiyor.
+- A HID interface is available for the ROG Strix Go 2.4.
+- ASUS vendor HID reports can be inspected through `hidraw`.
+- Standard media controls are recognized by the Linux input system.
+- UPower currently does not expose the headset as a battery device.
+- No battery device for the headset is present under `/sys/class/power_supply/`.
+- HID Feature Report `0xFF` can be read, but the current response does not appear to contain the battery level.
+- The HID report containing the battery percentage is not yet known.
 
-## Araştırma
+## Research
 
-Detaylı tersine mühendislik notları:
+Detailed reverse-engineering notes:
 
 [`research/rog-strix-go-2-4-linux-research.md`](research/rog-strix-go-2-4-linux-research.md)
 
-Araştırma notlarında HID descriptor, report ID'ler, Linux input arayüzleri, PipeWire durumu ve yapılan deneylerin sonuçları tutuluyor.
+The research notes contain information about the HID descriptor, report IDs, Linux input interfaces, PipeWire status, and the results of experiments performed so far.
 
-## Kapsam
+## Scope
 
-### Ana özellik
+### Core Features
 
-- Pil yüzdesini okumak
-- Düşük pil seviyesinde bildirim göstermek
+- Read the battery percentage
+- Display a low-battery notification
+- Display a charging notification
+- Display a critical-battery notification
 
-### Opsiyonel
+### Optional
 
-- Şarj oluyor bildirimi
-- Kritik pil bildirimi
-- Mikrofon mute davranışı
-- Diğer cihaz bilgileri
-- ASUS'a özgü ek özellikler
+- Microphone mute behavior
+- Additional device information
+- ASUS-specific additional features
 
-### Kapsam dışı
+### Out of Scope
 
-EQ ve genel ses işleme bu projenin ana hedefi değil. Bunlar Linux'un PipeWire/EasyEffects ekosistemiyle ayrıca çözülebilir.
+EQ and general audio processing are not core goals of this project. These can be handled separately through the Linux PipeWire/EasyEffects ecosystem.
 
-## Durum
+## Status
 
 **Research / Reverse Engineering**
 
-Şimdilik proje araştırma aşamasında. Kod yapısı, pil protokolü çözüldükten sonra şekillendirilecek.
+The project is currently in the research stage. The application architecture will be determined after the battery protocol has been identified.
