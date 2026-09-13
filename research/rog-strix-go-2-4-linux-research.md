@@ -219,6 +219,54 @@ HID:
 
 Therefore the actual battery percentage source remains unknown.
 
+## ASUS HID battery protocol research
+
+G-Helper's source contains a generic ASUS HID battery-reading implementation for supported ASUS peripherals. Its `AsusKeyboard.ReadBattery()` sends a command with the structure:
+
+```text
+[reportId, 0x12, 0x01]
+```
+
+The implementation expects a response that echoes the command bytes `0x12 0x01`. In that generic ASUS implementation, the response is interpreted using:
+
+- `response[6]` -> battery percentage
+- `response[9]` -> charging state
+
+This is useful protocol evidence, but it is **not yet proven to apply to the ROG Strix Go 2.4**.
+
+G-Helper model/source inspection found battery-capable ASUS peripherals such as the ROG Azoth using the generic battery machinery. However, no direct `0x0B05:0x18D6` / ROG Strix Go 2.4 model implementation was found in the currently inspected G-Helper source.
+
+Therefore the current hypothesis is:
+
+```text
+ASUS generic HID battery query
+        |
+        +-- command: 0x12 0x01
+        |
+        +-- unknown Strix Go 2.4 report ID
+        |
+        +-- possible response fields analogous to response[6] / response[9]
+```
+
+Candidate Strix Go 2.4 report IDs worth investigating first, based on the descriptor, are `0x90`, `0xC4`, and `0xFF`. The report ID must be established experimentally before treating any returned bytes as battery data.
+
+Important: do not assume that the generic ASUS response offsets or query work on this headset until a response is observed and validated across different battery/charging states.
+
+## Existing-source verification status
+
+What was confirmed:
+
+- G-Helper contains a generic ASUS HID battery query using `0x12 0x01`.
+- G-Helper contains generic response parsing for battery percentage and charging state.
+- Multiple ASUS peripheral models use the generic battery-capable infrastructure.
+
+What was **not** confirmed:
+
+- No direct G-Helper source entry for USB PID `0x18D6` was found during the inspected source search.
+- No direct public protocol dump showing the ROG Strix Go 2.4 battery query/response has been found yet.
+- No battery percentage byte has been identified on the headset.
+- No charging-state byte has been identified on the headset.
+
 ## Useful existing code/tooling
 
 A local HID explorer script has been used at `~/Desktop/test.py`.
@@ -234,12 +282,16 @@ Note: automatic discovery must be based on actual VID/PID/name because hidraw nu
 
 ## Next battery-focused research steps
 
-1. Parse the vendor reports more completely and map all fields.
-2. Investigate `0x90` and `0xC4` output packet semantics without random writes.
-3. Investigate `0xE2` and `0xFF` bitfields.
-4. Search existing Linux/GitHub implementations and firmware for `0b05:18d6`, `0x90`, `0xC4`, and related identifiers.
-5. If available, compare Windows/Armoury Crate USB HID traffic to identify battery queries.
-6. Once battery percentage is identified, build a small desktop-independent notifier using the freedesktop notification API.
+1. Test the generic ASUS `0x12 0x01` battery query against the descriptor-supported candidate report IDs, starting with `0x90`, `0xC4`, and `0xFF`.
+2. Record whether any response echoes `0x12 0x01`.
+3. If a response is found, record its complete raw bytes and compare the suspected battery/charging fields.
+4. Validate the candidate fields across multiple battery/charging states before implementing them.
+5. Parse the vendor reports more completely and map all fields.
+6. Investigate `0x90` and `0xC4` output packet semantics without random writes.
+7. Investigate `0xE2` and `0xFF` bitfields.
+8. Search existing Linux/GitHub implementations and firmware for `0b05:18d6`, `0x90`, `0xC4`, and related identifiers.
+9. If available, compare Windows/Armoury Crate USB HID traffic to identify battery queries.
+10. Once battery percentage is identified, build a small desktop-independent notifier using the freedesktop notification API.
 
 ## Scope decisions
 
