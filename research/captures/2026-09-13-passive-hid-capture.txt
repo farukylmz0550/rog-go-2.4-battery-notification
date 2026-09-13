@@ -1,0 +1,39 @@
+# ROG Strix Go 2.4 - Passive HID Capture
+
+Date: 2026-09-13
+Device: ASUS ROG STRIX Go 2.4
+VID:PID: 0B05:18D6
+HID interface: 3
+hidraw: /dev/hidraw5
+
+This file contains raw observations from the non-destructive passive capture. No SET_OUTPUT or SET_FEATURE requests were sent during the capture.
+
+## Raw reports
+
+```text
+2026-09-13T11:39:59.360690+00:00 report_id=0x01 len=5 data=01 00 02 00 00
+2026-09-13T11:39:59.369528+00:00 report_id=0x01 len=5 data=01 00 00 00 00
+2026-09-13T11:40:00.960470+00:00 report_id=0x01 len=5 data=01 00 02 00 00
+2026-09-13T11:40:00.969498+00:00 report_id=0x01 len=5 data=01 00 00 00 00
+2026-09-13T11:40:07.740805+00:00 report_id=0x01 len=5 data=01 00 04 00 00
+2026-09-13T11:40:07.749486+00:00 report_id=0x01 len=5 data=01 00 00 00 00
+2026-09-13T11:40:10.362662+00:00 report_id=0x01 len=5 data=01 00 01 00 00
+2026-09-13T11:40:10.371923+00:00 report_id=0x01 len=5 data=01 00 00 00 00
+2026-09-13T11:40:14.030819+00:00 report_id=0x01 len=5 data=01 00 00 00 00
+2026-09-13T11:40:14.031855+00:00 report_id=0x64 len=2 data=64 03
+2026-09-13T11:40:16.930509+00:00 report_id=0x64 len=2 data=64 01
+```
+
+## Capture summary
+
+```text
+reports=11
+0x01: 9
+0x64: 2
+```
+
+## Initial observation
+
+Report ID 0x01 appeared nine times. Report ID 0x64 appeared twice, with payload values 0x03 and 0x01.
+
+No battery interpretation is assigned to these values. Their semantics are not yet verified.
