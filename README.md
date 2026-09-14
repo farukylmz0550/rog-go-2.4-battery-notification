@@ -4,7 +4,7 @@ A project focused on monitoring the battery level of the ASUS ROG Strix Go 2.4 o
 
 > ⚠️ **Early development stage**
 >
-> The project can now successfully query the headset battery through the Linux `hidraw` interface. Battery percentage validation against a changing physical battery level is still pending.
+> The project can now successfully query the headset battery through the Linux `hidraw` interface with a small native C tool. Battery percentage validation against a changing physical battery level is still pending: the reported value has so far remained `64` across discharge and charging observations.
 
 ## Goal
 
@@ -30,6 +30,74 @@ Additional features may be evaluated later.
 - Reconnect testing confirms that the device can be rediscovered after the USB dongle is removed and reconnected.
 - A different response type (`0x01`) was observed while the headset was in 3.5 mm analog mode, but its meaning has not yet been established.
 - The reported `64%` value still needs validation after the physical battery level has changed.
+- **Validation concern:** `response[13]` stayed at `0x40` during both discharge and charging observations. Together with reports that ASUS shows this headset's battery in 25% increments, the interpretation of byte 13 as a battery percentage is now considered unconfirmed. The protocol will only be revised based on controlled measurements, not assumptions.
+
+## Battery Reader Tool
+
+A Linux-native C implementation now provides the battery reader with device
+discovery and connection handling:
+
+- Dynamic device discovery through `libudev` (`hidraw` -> USB interface
+  `bInterfaceNumber == 3` -> `idVendor 0B05` / `idProduct 18D6`). No fixed
+  `/dev/hidrawN` path is ever assumed.
+- Battery query through the Linux `hidraw` Feature Report API
+  (`HIDIOCSFEATURE` / `HIDIOCGFEATURE`), following the documented protocol.
+- A monitor mode that tolerates dongle disconnects and automatically
+  rediscovers the device on reconnect.
+- A `--debug` mode that dumps raw SET_FEATURE/GET_FEATURE exchanges to
+  stderr for protocol research.
+
+### Build
+
+Requires a C compiler, `make`, and `libudev` development files
+(`systemd-devel` on Fedora, `libudev-dev` on Debian/Ubuntu).
+
+```sh
+make
+```
+
+Or directly:
+
+```sh
+gcc -std=c11 -Wall -Wextra -O2 \
+    src/main.c src/device.c src/battery.c src/util.c \
+    -ludev \
+    -o rog-go-battery
+```
+
+### Permissions
+
+Hidraw nodes are root-owned by default. A udev rule is provided in
+[`deploy/udev/70-rog-strix-go-2.4.rules`](deploy/udev/70-rog-strix-go-2.4.rules);
+it tags the battery interface with `uaccess` so the active logged-in user
+gets access without `sudo`:
+
+```sh
+sudo cp deploy/udev/70-rog-strix-go-2.4.rules /etc/udev/rules.d/
+sudo udevadm control --reload && sudo udevadm trigger
+```
+
+Then unplug and replug the dongle once.
+
+### Usage
+
+```sh
+./rog-go-battery --once   # single read, exit 0 on success
+./rog-go-battery          # monitor loop: 30 s polling, auto-reconnect
+./rog-go-battery --debug  # same as monitor loop, plus raw HID dumps
+```
+
+Expected output:
+
+```text
+Searching for ROG Strix Go 2.4...
+Device connected: /dev/hidraw5
+Battery: 64%
+```
+
+When the dongle is removed, the tool prints `Device disconnected.` and
+`Waiting for device...`, then automatically rediscovers the headset when
+it is plugged in again. The hidraw node number is never assumed.
 
 ## Research
 
@@ -72,6 +140,6 @@ EQ and general audio processing are not core goals of this project. These can be
 
 ## Status
 
-**Research / Reverse Engineering / Initial Linux C Prototype**
+**Working Linux C battery reader, protocol validation pending**
 
-The battery query and Linux HID transport are working in a prototype. The next major validation step is confirming that the reported percentage changes with the physical battery level before building the notification layer.
+The battery reader, device discovery, and connection handling are implemented as a native C tool. The next major validation step is confirming that the reported percentage changes with the physical battery level before building the notification layer.

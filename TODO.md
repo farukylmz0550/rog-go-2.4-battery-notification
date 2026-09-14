@@ -70,14 +70,19 @@ Research and development task list.
 
 ## 🛠️ Application
 
-- [ ] Implement Linux HID code that can reliably read the battery percentage.
-- [ ] Discover the device using VID/PID or a stable udev path instead of `/dev/hidrawN`.
+- [x] Implemented a modular Linux C battery reader (`src/main.c`, `src/device.c`, `src/battery.c`, `src/util.c`).
+- [x] Discovered the device dynamically through `libudev` (hidraw -> USB interface `bInterfaceNumber == 3` -> `idVendor 0B05` / `idProduct 18D6`) instead of a fixed `/dev/hidrawN` path.
+- [x] Added a monitor mode that tolerates dongle disconnects and automatically rediscovers the device on reconnect.
+- [x] Added a `--debug` mode that dumps raw SET_FEATURE/GET_FEATURE exchanges for protocol research.
+- [ ] Validate that `response[13]` changes with the physical battery level. **Current observation: the value stayed at `0x40` (`64`) during discharge and charging, so byte 13 as battery percentage is unconfirmed.**
+- [ ] Identify the byte that actually reports the battery percentage (note: ASUS is reported to show this headset's battery in 25% increments in Armoury Crate).
+- [ ] Investigate the separate `0B05:18D7` "ROG STRIX Go 2.4 Headset Battery Charger" USB device as a possible battery/charging data source.
 - [ ] Add freedesktop notification support for the low-battery threshold.
 - [ ] Add a separate notification for critical battery level.
 - [ ] Evaluate charging started/finished notifications once charging state detection is available.
 - [ ] Design background operation independently of the desktop environment/window manager.
-- [ ] Configure the user service / udev permissions.
-- [ ] Automatically rediscover the device when the dongle is reconnected.
+- [ ] Configure the user service / udev permissions. *(A `uaccess` rule is now shipped in `deploy/udev/70-rog-strix-go-2.4.rules`; system service configuration comes with the notification stage.)*
+- [ ] Automatically rediscover the device when the dongle is reconnected. *(done in the monitor mode of `rog-go-battery`)*
 
 ## 🚫 Out of Scope
 
@@ -87,8 +92,7 @@ Research and development task list.
 
 ## Next Session
 
-1. Carefully test the G-Helper `[reportId, 0x12, 0x01]` query against the ROG Strix Go 2.4's actual vendor report IDs.
-2. If a report responds, record the raw response bytes.
-3. Compare the response at different battery and charging states.
-4. Add the findings to `research/rog-strix-go-2-4-linux-research.md`.
-5. Once the battery field is verified, proceed to the actual Linux battery reader implementation.
+1. Run the controlled `response[13]` validation sequence with the C tool's `--debug` mode: headset ON in 2.4 GHz mode, headset OFF, charging states, and readings after the physical battery level has changed.
+2. Record the raw exchanges in `research/captures/` and add the findings to `research/rog-strix-go-2-4-linux-research.md`.
+3. If byte 13 is disproved, identify the real battery byte from the captured data before touching the protocol.
+4. Once the battery field is verified, proceed to the notification layer.

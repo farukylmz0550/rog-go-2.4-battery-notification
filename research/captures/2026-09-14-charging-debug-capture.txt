@@ -1,0 +1,18 @@
+# 2026-09-14 debug capture during charging validation session
+#
+# Context: dongle connected, `rog-go-battery --once --debug`.
+# Earlier lsusb on the same session showed both 0B05:18D6 (dongle) and
+# 0B05:18D7 ("ROG STRIX Go 2.4 Headset Battery Charger").
+#
+# Notable: byte 13 = 0x40 again (same as all previous captures).
+# Bytes 9-12 and 16-19 differ from earlier captures
+# (earlier: 01 03 05 F9 0D ... 17 25 05 20; now: 0A 01 09 10 ... 8E E5 CA 2D),
+# so those bytes vary over time while byte 13 stays constant at 0x40.
+
+[22:28:06] SET_FEATURE (64 bytes):
+FF 08 00 FD 04 12 F1 03 52 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[22:28:06] GET_FEATURE (64 bytes):
+FF 1B 05 FE 12 04 1F 14 01 0A 01 09 10 40 15 01 01 8E E5 CA 2D B4 00 05 EA 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Searching for ROG Strix Go 2.4...
+Device connected: /dev/hidraw5
+Battery: 64%

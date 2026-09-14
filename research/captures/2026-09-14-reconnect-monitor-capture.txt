@@ -1,0 +1,23 @@
+# 2026-09-14 disconnect/reconnect monitor test
+#
+# Command: `rog-go-battery` (monitor mode), physical unplug of the USB
+# dongle for ~15 s, then replug. Complete captured output:
+#
+# - Disconnect was detected within ~1 s via the devnode existence
+#   watch (not by waiting for the next battery poll).
+# - The headset was rediscovered automatically on replug.
+# - The first query after reconnect returned the unknown response
+#   type 0x01; the tool rejected it without interpreting it and
+#   the next query returned the normal 0x1B battery response again.
+# - Enumeration number changed across replug (USB device 013 -> 015
+#   -> 016), while the hidraw node happened to stay /dev/hidraw5;
+#   discovery never assumed a fixed node.
+
+Searching for ROG Strix Go 2.4...
+Device connected: /dev/hidraw5
+Battery: 64%
+Device disconnected.
+Waiting for device...
+Device connected: /dev/hidraw5
+Unexpected response type: 0x01 (battery value not read from unknown responses)
+Battery: 64%

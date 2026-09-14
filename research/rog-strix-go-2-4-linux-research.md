@@ -352,6 +352,87 @@ A useful validation sequence is:
 
 and repeat after the physical battery level has changed enough to produce a measurable difference.
 
+## 2026-09-14 observation: `response[13]` constant at `0x40` during discharge and charging
+
+The user observed that the reported value stayed at `64` (`0x40`) while the
+headset was being used (discharge) and also while it was charging. The value
+did not change in either state.
+
+This is significant evidence against the straightforward interpretation of
+byte 13 as a live battery percentage:
+
+- A real percentage that survives both discharge and charging without
+  changing once is implausible.
+- A ROG forum report for the same headset states that ASUS shows the
+  battery in 25% increments (25/50/75/100) in Armoury Crate. `0x40` (64)
+  does not fit that scheme, but fits a flag/status bit pattern
+  (`0x40` = bit 6 set).
+- G-Helper PR #5159's comment "Byte 13 (YY) = battery percentage
+  (0x40 = 64%)" is based on a single observation and is now considered
+  unconfirmed.
+
+Per project rules, the protocol is not changed based on assumptions. The
+current implementation still reads byte 13 and reports it, but the
+interpretation is explicitly unverified. Controlled `--debug` captures at
+known battery states are required before revising the protocol.
+
+Related lead: while the headset was charging, an additional USB device
+appeared on the same bus: `0B05:18D7` ("ROG STRIX Go 2.4 Headset Battery
+Charger"). This device may be involved in charging/battery reporting and
+should be investigated separately.
+
+## Modular C implementation (2026-09-14)
+
+The single-file prototype was refactored into a modular Linux-native C tool:
+
+```text
+src/main.c     - CLI (--once, --debug, --help), monitor loop, reconnect handling
+src/device.c   - libudev discovery: hidraw -> bInterfaceNumber == 3 ->
+                 idVendor 0B05 / idProduct 18D6 -> /dev/hidrawN
+src/battery.c  - feature-report query, validation, percentage extraction
+src/util.c     - millisecond sleep helper
+```
+
+Properties:
+
+- No hardcoded hidraw number; the device is discovered dynamically on
+  every scan, and the monitor loop rescans after disconnects.
+- The hidraw node is opened per query (a long-lived fd cannot survive
+  re-enumeration).
+- Transport: `HIDIOCSFEATURE(64)` -> ~35 ms -> `HIDIOCGFEATURE(64)`,
+  as established earlier.
+- Validation: report ID `0xFF`, response type `0x1B`, byte 13 <= 100.
+  Unknown response types (e.g. `0x01` in 3.5 mm mode) are rejected, not
+  interpreted.
+- `--debug` prints timestamped raw SET_FEATURE/GET_FEATURE exchanges to
+  stderr for research captures.
+
+A udev `uaccess` rule is shipped at `deploy/udev/70-rog-strix-go-2.4.rules`
+so a normal user can open the battery hidraw node without `sudo`. The rule
+matches on the `ENV{ID_VENDOR_ID}` / `ENV{ID_MODEL_ID}` /
+`ENV{ID_USB_INTERFACE_NUM}` properties of the hidraw node itself, because
+udev requires all `ATTRS` matches in one rule to come from the same parent
+device (the interface and the USB device are different parents).
+
+## 2026-09-14 disconnect/reconnect test with the C tool
+
+Physical test with the monitor mode (`research/captures/
+2026-09-14-reconnect-monitor-capture.txt`):
+
+1. Dongle removed -> `Device disconnected.` appeared within ~1 s
+   (the monitor watches the hidraw node in 1 s slices between polls).
+2. `Waiting for device...` -> rescan every 3 s.
+3. Dongle replugged -> automatically rediscovered (the USB enumeration
+   number changed across replugs, the tool never relied on it).
+4. The first query after reconnect returned the unknown response type
+   `0x01`. The tool rejected it without interpreting it and the next
+   query returned the normal `0x1B` response with byte 13 = `0x40`.
+
+Note: the post-reconnect `0x01` response resembles the response type
+previously observed in 3.5 mm analog mode. It is recorded as a
+transient state right after reassociation; its meaning is still
+unknown and it must not be interpreted as battery data.
+
 ## Useful existing code/tooling
 
 A local HID explorer script has been used at `~/Desktop/test.py`.
