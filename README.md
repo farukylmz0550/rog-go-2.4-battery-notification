@@ -4,7 +4,7 @@ A project focused on monitoring the battery level of the ASUS ROG Strix Go 2.4 o
 
 > ⚠️ **Early development stage**
 >
-> The current primary goal of the project is research and protocol discovery. There is no working battery percentage reader yet.
+> The project can now successfully query the headset battery through the Linux `hidraw` interface. Battery percentage validation against a changing physical battery level is still pending.
 
 ## Goal
 
@@ -20,13 +20,16 @@ Additional features may be evaluated later.
 
 - The USB device is detected by Linux.
 - VID/PID: `0B05:18D6`
-- A HID interface is available for the ROG Strix Go 2.4.
-- ASUS vendor HID reports can be inspected through `hidraw`.
+- The relevant HID interface is `MI_03`.
+- ASUS vendor HID reports can be accessed through `hidraw`.
 - Standard media controls are recognized by the Linux input system.
 - UPower currently does not expose the headset as a battery device.
 - No battery device for the headset is present under `/sys/class/power_supply/`.
-- HID Feature Report `0xFF` can be read, but the current response does not appear to contain the battery level.
-- The HID report containing the battery percentage is not yet known.
+- The headset-specific battery query has been identified from G-Helper PR #5159.
+- The Linux C implementation successfully sends the known 64-byte Feature Report query and receives a response containing `response[13] = 0x40` (`64`).
+- Reconnect testing confirms that the device can be rediscovered after the USB dongle is removed and reconnected.
+- A different response type (`0x01`) was observed while the headset was in 3.5 mm analog mode, but its meaning has not yet been established.
+- The reported `64%` value still needs validation after the physical battery level has changed.
 
 ## Research
 
@@ -34,7 +37,19 @@ Detailed reverse-engineering notes:
 
 [`research/rog-strix-go-2-4-linux-research.md`](research/rog-strix-go-2-4-linux-research.md)
 
-The research notes contain information about the HID descriptor, report IDs, Linux input interfaces, PipeWire status, and the results of experiments performed so far.
+The research notes contain information about the HID descriptor, report IDs, Linux input interfaces, PipeWire status, the known battery protocol, C tests, reconnect testing, and the 3.5 mm analog mode observation.
+
+## External References
+
+The battery protocol used by this project was identified using G-Helper pull request #5159:
+
+- [G-Helper PR #5159 - Add ROG Strix Go 2.4 support](https://github.com/seerge/g-helper/pull/5159)
+
+PR #5159 documents the ROG Strix Go 2.4 Feature Report query and the battery percentage location used by the Windows implementation. This project uses that documented protocol as the basis for its Linux implementation.
+
+Additional source notes are maintained in:
+
+[`research/external-sources.md`](research/external-sources.md)
 
 ## Scope
 
@@ -42,7 +57,7 @@ The research notes contain information about the HID descriptor, report IDs, Lin
 
 - Read the battery percentage
 - Display a low-battery notification
-- Display a charging notification
+- Display a charging notification, if the charging protocol can be established reliably
 - Display a critical-battery notification
 
 ### Optional
@@ -57,6 +72,6 @@ EQ and general audio processing are not core goals of this project. These can be
 
 ## Status
 
-**Research / Reverse Engineering**
+**Research / Reverse Engineering / Initial Linux C Prototype**
 
-The project is currently in the research stage. The application architecture will be determined after the battery protocol has been identified.
+The battery query and Linux HID transport are working in a prototype. The next major validation step is confirming that the reported percentage changes with the physical battery level before building the notification layer.
