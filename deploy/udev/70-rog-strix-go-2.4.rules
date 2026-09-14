@@ -13,4 +13,9 @@
 #           sudo udevadm control --reload && sudo udevadm trigger
 # Then replug the dongle once.
 
+# Dongle (battery interface MI_03):
 SUBSYSTEM=="hidraw", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="18d6", ENV{ID_USB_INTERFACE_NUM}=="03", TAG+="uaccess"
+
+# The headset itself, enumerated as 18D7 while its USB-C cable is
+# connected to the PC (single HID interface, used for research).
+SUBSYSTEM=="hidraw", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="18d7", TAG+="uaccess"
