@@ -326,6 +326,16 @@ Observations:
 
 Important: this does **not** establish that `0x01` is a battery response type or that it specifically represents 3.5 mm mode. It only records the observed correlation. The data after the first response bytes is very similar to the known wireless response, including the same `response[13]` value.
 
+## Wireless stability and charging observation
+
+During the battery validation test, the 2.4 GHz wireless connection intermittently dropped during extended use. Switching to 3.5 mm analog mode and then returning to 2.4 GHz restored the connection.
+
+The headset was subsequently connected to USB-C charging. While charging, no similar 2.4 GHz connection drop was observed during the observed test period.
+
+This is only an observation and does **not** establish that battery level or charging state causes the wireless disconnects. More controlled testing is required before assigning a cause.
+
+The battery query continued to report `64%` during this period, so the observation also does not currently establish whether `response[13]` tracks the physical battery level dynamically.
+
 ## Battery percentage validation status
 
 The battery query has been proven to work at the transport level and currently reports `64%` in repeated observations. However, the headset has not yet been observed at a known different physical battery percentage through this Linux implementation.
@@ -362,6 +372,7 @@ Note: automatic discovery must be based on actual VID/PID/name because hidraw nu
 3. Do not infer charging state from `response[11]` until the protocol is established reliably.
 4. Once battery reading is confirmed, implement periodic polling and low-battery notifications.
 5. Investigate charging-state support separately only if the protocol can be established reliably.
+6. Repeat controlled wireless stability tests at different battery/charging conditions.
 
 ## Scope decisions
 
