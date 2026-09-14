@@ -19,6 +19,9 @@ Research and development task list.
 - [x] Identified the candidate query structure used by G-Helper: `[reportId, 0x12, 0x01]`.
 - [x] Confirmed that the generic ASUS protocol uses `response[6]` for battery percentage and `response[9]` for charging state.
 - [x] Confirmed that no direct `0x0B05:0x18D6` / ROG Strix Go 2.4 battery implementation was found in the G-Helper source. Therefore, the protocol is not assumed to work for the headset.
+- [x] Verified the headset-specific query from G-Helper PR #5159 (`FF 08 00 FD 04 12 F1 03 52 01`) on the dongle MI_03 interface: accepted, answered with the `FF 1B ...` response type.
+- [x] Implemented and physically tested the modular C battery reader (monitor mode: ~1 s disconnect detection, automatic rediscovery, `uaccess` udev rule installed and verified).
+- [x] Determined that `0B05:18D7` ("ROG STRIX Go 2.4 Headset Battery Charger") is the headset itself enumerated when its USB-C charging cable is connected to the PC; it disappears when the cable is unplugged (observation during the 2026-09-14 sessions).
 
 ## ❌ Unresolved / Not Yet Solved
 
@@ -35,7 +38,7 @@ Research and development task list.
 
 ## 🔬 Battery / HID Discovery
 
-- [ ] Test the G-Helper ASUS battery query on the ROG Strix Go 2.4.
+- [x] Test the G-Helper ASUS battery query on the ROG Strix Go 2.4. *(headset-specific variant accepted by the dongle MI_03 interface, `0x1B` response)*
 - [ ] Carefully investigate whether `[reportId, 0x12, 0x01]` is accepted on candidate report IDs (`0x90`, `0xC4`, `0xFF`).
 - [ ] If a query produces a response, record the response structure and verify fields such as `response[6]` / `response[9]`.
 - [ ] Verify the suspected battery field at different battery levels.
@@ -84,6 +87,27 @@ Research and development task list.
 - [ ] Configure the user service / udev permissions. *(A `uaccess` rule is now shipped in `deploy/udev/70-rog-strix-go-2.4.rules`; system service configuration comes with the notification stage.)*
 - [ ] Automatically rediscover the device when the dongle is reconnected. *(done in the monitor mode of `rog-go-battery`)*
 
+## 🧪 Battery Validation Plan (next experiments)
+
+Protocol will only be revised from measured data, never from assumptions.
+Only the known battery query is sent to candidate interfaces; no invented
+commands.
+
+### Experiment A - charging ramp (fast signal, ~1 h)
+
+- [ ] With the headset charging via the PC USB-C port and the dongle connected, log the dongle battery query every 30-60 s (`rog-go-battery --debug 2>&1 | tee research/captures/<date>-charging-ramp-capture.txt`).
+- [ ] Diff the logged responses over at least three time points; a byte rising monotonically during charging is a battery-percentage candidate (byte 13 is expected to stay `0x40`).
+- [ ] While `0B05:18D7` is present, enumerate its HID interfaces and hidraw nodes, extract the HID report descriptors, and try the known battery query on each of its HID interfaces; log raw responses.
+
+### Experiment B - discharge session (definitive proof, slow)
+
+- [ ] During normal 2.4 GHz use, log queries periodically for an extended session (the headset is reported to power itself off around 25%).
+- [ ] Verify the candidate byte decreases during discharge and re-rises during the next charge.
+
+### Experiment C - passive listening
+
+- [ ] Passive-read the vendor input reports (`0x64`, `0x65`, `0x90`, `0xC4`, `0xE2`) while the headset is in use, to check whether battery data streams spontaneously.
+
 ## 🚫 Out of Scope
 
 - [x] EQ control will not be included in the project. It can be handled through PipeWire/EasyEffects.
@@ -92,7 +116,7 @@ Research and development task list.
 
 ## Next Session
 
-1. Run the controlled `response[13]` validation sequence with the C tool's `--debug` mode: headset ON in 2.4 GHz mode, headset OFF, charging states, and readings after the physical battery level has changed.
-2. Record the raw exchanges in `research/captures/` and add the findings to `research/rog-strix-go-2-4-linux-research.md`.
-3. If byte 13 is disproved, identify the real battery byte from the captured data before touching the protocol.
+1. Run Experiment A (charging ramp): plug the headset into the PC via USB-C, start the dongle logging session, and probe the `0B05:18D7` HID interfaces with the known battery query.
+2. Record raw exchanges in `research/captures/` and the findings in `research/rog-strix-go-2-4-linux-research.md`.
+3. Identify the real battery byte from the captured data; confirm it later with Experiment B (discharge) before touching the protocol.
 4. Once the battery field is verified, proceed to the notification layer.
