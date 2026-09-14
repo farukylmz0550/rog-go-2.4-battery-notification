@@ -95,9 +95,14 @@ commands.
 
 ### Experiment A - charging ramp (fast signal, ~1 h)
 
-- [ ] With the headset charging via the PC USB-C port and the dongle connected, log the dongle battery query every 30-60 s (`rog-go-battery --debug 2>&1 | tee research/captures/<date>-charging-ramp-capture.txt`).
-- [ ] Diff the logged responses over at least three time points; a byte rising monotonically during charging is a battery-percentage candidate (byte 13 is expected to stay `0x40`).
-- [ ] While `0B05:18D7` is present, enumerate its HID interfaces and hidraw nodes, extract the HID report descriptors, and try the known battery query on each of its HID interfaces; log raw responses.
+Status as of 2026-09-14 ~23:40 (session cut short by shutdown):
+
+- [x] Dongle battery query logged every 30 s while the headset charges via the PC USB-C port (`research/captures/2026-09-14-charging-ramp-capture.txt`; `rog-ramp2.service` user unit was logging).
+- [x] `0B05:18D7` HID interfaces probed with the known battery query: feature report `0xFF` is static (`FF 01 00...`), `0xFD` is input-only, no spontaneous input reports in 20 s of passive reading. The 18D7 HID surface does not currently provide battery data.
+- [x] Response type `0x01` appears transiently right after the headset is plugged in for charging / powered on; it returns to `0x1B` shortly after. Combined with the earlier 3.5 mm observation, `response[1]` appears to reflect headset association state rather than "3.5 mm mode".
+- [ ] **Resume tomorrow (open question):** analyze the full ramp capture with `tools/ramp_diff.py`. So far byte 13 stayed `0x40` and bytes 11/12 drifted as a 16-bit LE pair (`0x1028` -> `0x1042`), which looks more like a cumulative counter than a battery level. Determine whether ANY byte tracks the charge level before the headset is fully charged.
+- [ ] Compare the ramp capture against a capture taken while the headset is fully charged / still charging tomorrow morning, if charging continues.
+- [ ] If charging finished overnight, immediately capture one `--debug` reading at full charge and compare all bytes against the pre-charge state.
 
 ### Experiment B - discharge session (definitive proof, slow)
 
@@ -116,7 +121,6 @@ commands.
 
 ## Next Session
 
-1. Run Experiment A (charging ramp): plug the headset into the PC via USB-C, start the dongle logging session, and probe the `0B05:18D7` HID interfaces with the known battery query.
-2. Record raw exchanges in `research/captures/` and the findings in `research/rog-strix-go-2-4-linux-research.md`.
-3. Identify the real battery byte from the captured data; confirm it later with Experiment B (discharge) before touching the protocol.
-4. Once the battery field is verified, proceed to the notification layer.
+1. Charge-session context for tomorrow: the dongle responses logged tonight show byte 13 constant at `0x40` while charging; bytes 11/12 drift as a 16-bit LE pair and look like an uptime counter, not a battery level. Re-run `python3 tools/ramp_diff.py research/captures/2026-09-14-charging-ramp-capture.txt` after the full charging session and after the headset has been used (discharge) to see whether any byte tracks the battery.
+2. If no byte changes across charge/discharge, the dongle response likely carries only cached or non-battery data; then focus on the headset itself (`0B05:18D7`, currently probed as HID-empty) and on the Armoury Crate captures listed under Firmware / Windows Research.
+3. Once the battery field is verified, proceed to the notification layer.
