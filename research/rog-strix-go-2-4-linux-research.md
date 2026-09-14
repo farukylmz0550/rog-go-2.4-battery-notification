@@ -131,9 +131,7 @@ ff 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 
 Observed length: 27 bytes.
 
-The same response was obtained in 10 consecutive reads.
-
-The response was also unchanged before and after connecting/disconnecting the headset's USB-C charging cable during the charging test. Therefore the currently observed `0xFF` response is not a useful direct battery indication.
+The same response was obtained in 10 consecutive reads. The response was also unchanged before and after connecting/disconnecting the headset's USB-C charging cable during the charging test. Therefore the currently observed `0xFF` response is not a useful direct battery indication.
 
 Important: the meaning of the `0x01` byte after the Report ID is unknown and must not be assumed.
 
@@ -277,6 +275,73 @@ The Linux implementation should:
 6. Parse `response[13]` as the battery percentage.
 7. Validate the result against the physical headset battery state before treating it as reliable.
 
+## Successful Linux C test
+
+The low-level C implementation successfully performed the known battery query through Linux `hidraw` and `libudev`.
+
+Successful output in 2.4 GHz mode:
+
+```text
+Device: /dev/hidraw5
+VID:PID 0B05:18D6
+Interface: MI_03
+
+HIDIOCSFEATURE result: 64
+GET_FEATURE:
+FF 1B 05 FE 12 04 1F 14 01 03 05 F9 0D 40 15 01 01 17 25 05 20 B4 00 05 EA ...
+
+Battery: 64%
+```
+
+A reconnect test was also completed successfully:
+
+1. Dongle connected -> device found and battery reported as `64%`.
+2. Dongle removed -> `ROG Strix Go 2.4 not found`.
+3. Dongle reconnected -> device found again and battery reported as `64%`.
+
+This confirms that the current C discovery code does not depend on a permanently assigned `/dev/hidraw5` path.
+
+## 3.5 mm analog mode observation
+
+The headset was then switched from 2.4 GHz wireless operation to 3.5 mm analog jack mode while the USB dongle remained available to Linux.
+
+The same battery query produced a different response type:
+
+```text
+FF 01 00 FE 12 04 1F 14 01 03 05 DE 0D 40 15 01 01 17 25 05 20 B4 00 05 EA ...
+```
+
+Compared with the 2.4 GHz response:
+
+```text
+FF 1B 05 FE 12 04 1F 14 01 03 05 DE 0D 40 15 01 01 17 25 05 20 B4 00 05 EA ...
+```
+
+Observations:
+
+- The response type changed from `0x1B` to `0x01`.
+- `response[11]` was `0xDE` in this observation.
+- `response[13]` remained `0x40`, corresponding to `64%`.
+- The C parser currently reports the `0x01` response as `Unexpected response type: 0x01` because it was written to accept the `0x1B` response documented by G-Helper.
+
+Important: this does **not** establish that `0x01` is a battery response type or that it specifically represents 3.5 mm mode. It only records the observed correlation. The data after the first response bytes is very similar to the known wireless response, including the same `response[13]` value.
+
+## Battery percentage validation status
+
+The battery query has been proven to work at the transport level and currently reports `64%` in repeated observations. However, the headset has not yet been observed at a known different physical battery percentage through this Linux implementation.
+
+Therefore `response[13] = battery percentage` is currently supported by the G-Helper implementation and successful local testing, but the project should still validate that the reported percentage changes when the physical battery level changes. Repeated `64%` readings alone cannot prove that the value is stuck.
+
+A useful validation sequence is:
+
+```text
+2.4 GHz -> read battery
+3.5 mm  -> read battery
+2.4 GHz -> read battery
+```
+
+and repeat after the physical battery level has changed enough to produce a measurable difference.
+
 ## Useful existing code/tooling
 
 A local HID explorer script has been used at `~/Desktop/test.py`.
@@ -292,12 +357,11 @@ Note: automatic discovery must be based on actual VID/PID/name because hidraw nu
 
 ## Next battery-focused implementation steps
 
-1. Write a small Linux Python probe that sends the known G-Helper battery query and reads the `0xFF` Feature Report.
-2. Print and record the complete response in hexadecimal.
-3. Parse only `response[13]` as the initial battery percentage.
-4. Validate the reported percentage against the actual headset battery state.
-5. Once battery reading is confirmed, implement periodic polling and low-battery notifications.
-6. Investigate charging-state support separately only if the protocol can be established reliably.
+1. Continue validating `response[13]` against the actual headset battery state.
+2. Investigate the meaning of the `0x01` response observed in 3.5 mm analog mode.
+3. Do not infer charging state from `response[11]` until the protocol is established reliably.
+4. Once battery reading is confirmed, implement periodic polling and low-battery notifications.
+5. Investigate charging-state support separately only if the protocol can be established reliably.
 
 ## Scope decisions
 
