@@ -1,0 +1,16 @@
+# ASUS ROG Strix Go 2.4 dongle - battery HID interface (MI_03)
+#
+# Grants the active logged-in session access to the hidraw node of the
+# dongle interface that answers the battery Feature Report query
+# (VID:PID 0B05:18D6, interface 03 / MI_03).
+#
+# Matching uses the ENV properties assigned by the usb_id builtin to the
+# hidraw node itself. Mixing ATTRS from different parents (interface and
+# USB device) in one rule does not work: udev requires all ATTRS matches
+# to come from the same parent device.
+#
+# Install:  sudo cp 70-rog-strix-go-2.4.rules /etc/udev/rules.d/
+#           sudo udevadm control --reload && sudo udevadm trigger
+# Then replug the dongle once.
+
+SUBSYSTEM=="hidraw", ENV{ID_VENDOR_ID}=="0b05", ENV{ID_MODEL_ID}=="18d6", ENV{ID_USB_INTERFACE_NUM}=="03", TAG+="uaccess"
